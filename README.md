@@ -1,7 +1,5 @@
-# Day 1 - Hello, world
-
+# Day 3 - Working with a Hard IP
 ## Assignment instructions
-Open `hello-world.py` and modify it according to the instructions.
 
 ## Submitting the assignment
 - Click "Fork" (upper right, above "Add file" and "Code") 

@@ -98,58 +98,57 @@ def run_tests():
     instances = ["impl0", "impl1", "impl2", "impl3", "impl4", "impl5"]
 
     for name in instances:
-        print(f"\n===============================")
-        print(f"=== Testing {name} ===")
-        print("===============================")
         ip = Uad()
         ip.inst = name
 
-        # --- Enable / Disable Test ---
+        # --- Enable / Disable ---
         ip.reset()
         ip.enable()
-        print("\n--- Enable / Disable Test ---")
-        enabled = ip.is_filter_enabled()
-        print("Filter enabled:", enabled)
+        csr = ip.read_CSR()
+        enabled = (csr >> 0) & 1 if csr else None
 
         ip.disable()
-        enabled = ip.is_filter_enabled()
-        print("Filter disabled:", enabled)
+        csr = ip.read_CSR()
+        disabled = (csr >> 0) & 1 if csr else None
 
+        # --- Bypass ---
         ip.reset()
         ip.enable()
-
-        # --- Bypass Test ---
-        print("\n--- Bypass Test ---")
         ip.set_bypass(True)
         test_input = 0x1234
-        output = ip.drive_signal(test_input)
-        output_str = f"0x{output:X}" if output is not None else "Error"
-        print(f"Input {hex(test_input)} → Output {output_str} (bypass)")
+        bypass_out = ip.drive_signal(test_input)
+        bypass_str = f"0x{bypass_out:X}" if bypass_out is not None else "Error"
         ip.set_bypass(False)
-        csr_after_bypass = ip.read_CSR()
-        print(f"CSR after bypass cleared: 0x{csr_after_bypass:X}" if csr_after_bypass is not None else "CSR read failed")
+        csr = ip.read_CSR()
+        csr_bypass_cleared = f"0x{csr:X}" if csr else "N/A"
 
-        # --- Buffer / Halt Test ---
-        print("\n--- Buffer / Halt Test ---")
+        # --- Buffer / Halt ---
         ip.halt()
-        print("Filter halted:", ip.is_halted())
-        # Feed 256 samples without printing each one
         for i in range(256):
             ip.drive_signal(i)
-        print("Buffer count after 256 inputs:", ip.buffer_count())
-        print("Overflow status:", ip.has_overflowed())
+        csr = ip.read_CSR()
+        buf_count = (csr >> 8) & 0xFF if csr else None
+        overflow = (csr >> 16) & 1 if csr else None
         ip.clear_buffer()
-        print("Buffer cleared")
-        print("Buffer count after clear:", ip.buffer_count())
-        print("Overflow after clear:", ip.has_overflowed())
+        csr = ip.read_CSR()
+        buf_cleared = (csr >> 8) & 0xFF if csr else None
+        overflow_cleared = (csr >> 16) & 1 if csr else None
 
-        # --- Register Read/Write Test ---
-        print("\n--- Register Read/Write Test ---")
+        # --- Register ---
         coef_addr = 0x4
         new_coef = 0x12345678
         ip.write_register(coef_addr, new_coef)
         read_back = ip.read_register(coef_addr)
-        print(f"Wrote {hex(new_coef)} → Read back: 0x{read_back:X}" if read_back is not None else "Read failed")
+        read_back_str = f"0x{read_back:X}" if read_back else "N/A"
+
+        # --- Print summary ---
+        print(
+            f"{name}: Enabled={enabled}, Disabled={disabled}, "
+            f"BypassOut={bypass_str}, CSR_bypass={csr_bypass_cleared}, "
+            f"Buffer={buf_count}, Overflow={overflow}, "
+            f"BufferCleared={buf_cleared}, OverflowCleared={overflow_cleared}, "
+            f"RegReadBack={read_back_str}"
+        )
 
 if __name__ == "__main__":
     run_tests()

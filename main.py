@@ -2,11 +2,6 @@ import os
 import subprocess
 import platform
 
-# Simple color codes for terminal
-GREEN = '\033[92m'
-RED = '\033[91m'
-ENDC = '\033[0m'
-
 class Uad():
     def __init__(self, inst):
         # Windows: use .exe, Linux/macOS: use ./inst
